@@ -2,6 +2,7 @@ from bs4 import BeautifulSoup
 from urllib.parse import urljoin
 import requests
 import re
+import os
 import pandas as pd
 
 
@@ -111,6 +112,23 @@ def LinksExtraction(siteURL, sectionURL):
 		CurrentPage += 1
 	return links
 
+def imageDownload(data, output_path):
+	output_path = "images/"+output_path
+	for idx, image_url in enumerate(data['image_URL']):
+		if not os.path.exists(output_path):
+			os.makedirs(output_path)
+		image_filename = f"image_{idx + 1}.jpg"  # Generate a filename for the image
+		image_path = os.path.join(output_path, image_filename)  # Combine with output folder path
+
+		# Download the image
+		response = requests.get(image_url)
+		if response.status_code == 200:
+			with open(image_path, 'wb') as f:
+				f.write(response.content)
+		print(f"Image {idx + 1} downloaded successfully.")
+	else:
+		print(f"Failed to download image {idx + 1}.")
+
 def extractSection(name, sectionURL, siteURL):
 	# The dictionnary
 	data = {
@@ -132,8 +150,9 @@ def extractSection(name, sectionURL, siteURL):
 	for link in linksSection:
 		scrapProductPage(siteURL, link, data)
 	# Export to file
+	imageDownload(data, name) #download images
 	df = pd.DataFrame(data)
-	df.to_csv(name+".csv", index=False, encoding='utf-8')
+	df.to_csv("files/"+name+".csv", index=False, encoding='utf-8')
 
 def extractListSections(siteURL):
 
